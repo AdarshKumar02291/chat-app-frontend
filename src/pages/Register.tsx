@@ -9,7 +9,13 @@ function Register() {
     return <div>Error: AuthContext is not available.</div>;
   }
 
-  const { register, updateRegisterInfo } = authContext;
+  const {
+    register,
+    updateRegisterInfo,
+    registerUser,
+    registerError,
+    isRegisterLoading,
+  } = authContext;
   return (
     <>
       <div className="w-screen h-screen bg-blue-500 overflow-hidden flex flex-col items-center justify-center">
@@ -29,7 +35,17 @@ function Register() {
               updateRegisterInfo({ ...register, email: e.target.value });
             }}
           />
-          <button className="bg-yellow-500 w-fit p-2">Register</button>
+          <button
+            className="bg-yellow-500 w-fit p-2"
+            onClick={registerUser}
+          >
+            {isRegisterLoading ? "Loading" : "Register"}
+          </button>
+          {registerError?.error && (
+            <>
+              <div>An error occured</div>
+            </>
+          )}
         </div>
       </div>
     </>

@@ -1,4 +1,16 @@
+import { useContext } from "react";
+import { AuthContext } from "../context/Authcontext";
+
 function Chat() {
+
+  const authContext = useContext(AuthContext);
+
+  // Handle case where context is undefined
+  if (!authContext) {
+    return <div>Error: AuthContext is not available.</div>;
+  }
+
+  const {user} = authContext
   return (
     <>
       <div className="flex items-center justify-center">
