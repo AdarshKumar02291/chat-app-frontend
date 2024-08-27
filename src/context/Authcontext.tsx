@@ -13,12 +13,15 @@ interface User {
 }
 
 interface Register {
-  name: string;
+  firstName: string;
   email: string;
+  lastName :string;
+  password:string;
 }
 
 interface Login {
   email: string;
+    password:string;
 }
 
 interface AuthContextType {
@@ -51,12 +54,15 @@ export const AuthContextProvider: FC<AuthContextProviderProps> = ({
   const [registerError, setRegisterError] = useState<null | any>(null);
   const [isRegisterLoading, setIsRegisterLoading] = useState<boolean>(false);
   const [register, setRegisterInfo] = useState<Register>({
-    name: "",
+    firstName: "",
     email: "",
+    lastName:"",
+    password : "",
   });
 
   const [loginInfo, setLoginInfo] = useState<Login>({
     email: "",
+    password:"",
   });
 
   const [loginError, setLoginError] = useState<null | any>(null);
@@ -90,7 +96,7 @@ export const AuthContextProvider: FC<AuthContextProviderProps> = ({
     setIsLoginLoading(true);
     setLoginError(null);
     const res = await postRequest(
-      `${BASE_URL}/v1/user/signin`,
+      `${BASE_URL}/v1/user/login`,
       JSON.stringify(loginInfo)
     );
     setIsLoginLoading(false);

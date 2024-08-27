@@ -24,8 +24,17 @@ function Register() {
           <input
             type="text"
             className="w-full"
+            placeholder="first Name"
             onChange={(e) => {
-              updateRegisterInfo({ ...register, name: e.target.value });
+              updateRegisterInfo({ ...register, firstName: e.target.value });
+            }}
+          />
+          <input
+            type="text"
+            className="w-full"
+            placeholder="Last Name"
+            onChange={(e) => {
+              updateRegisterInfo({ ...register, lastName: e.target.value });
             }}
           />
           <input
@@ -35,10 +44,15 @@ function Register() {
               updateRegisterInfo({ ...register, email: e.target.value });
             }}
           />
-          <button
-            className="bg-yellow-500 w-fit p-2"
-            onClick={registerUser}
-          >
+          <input
+            type="text"
+            className="w-full"
+            placeholder="password"
+            onChange={(e) => {
+              updateRegisterInfo({ ...register, password: e.target.value });
+            }}
+          />
+          <button className="bg-yellow-500 w-fit p-2" onClick={registerUser}>
             {isRegisterLoading ? "Loading" : "Register"}
           </button>
           {registerError?.error && (

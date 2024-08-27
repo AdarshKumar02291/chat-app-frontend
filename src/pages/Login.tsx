@@ -24,8 +24,17 @@ function Login() {
         <input
           type="text"
           className="w-full"
+          placeholder="Email"
           onChange={(e) => {
             updateLoginInfo({...loginInfo, email: e.target.value });
+          }}
+        />
+         <input
+          type="text"
+          className="w-full"
+          placeholder="Password"
+          onChange={(e) => {
+            updateLoginInfo({...loginInfo, password: e.target.value });
           }}
         />
         <button className="bg-yellow-500 w-fit p-2" onClick={loginUser}>{isLoginLoading?"Loading" : "Login"}</button>
