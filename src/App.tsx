@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { useContext } from "react";
 import { AuthContext } from "./context/Authcontext";
+import { ChatContextProvider } from "./context/Chatcontext";
 
 function App() {
   const authContext = useContext(AuthContext);
@@ -16,11 +17,13 @@ function App() {
   const { user } = authContext;
   return (
     <>
-      <Routes>
-        <Route path="/chat" element={user ? <Chat /> : <Login />}></Route>
-        <Route path="/login" element={<Login />}></Route>
-        <Route path="/register" element={<Register />}></Route>
-      </Routes>
+      <ChatContextProvider user={user}>
+        <Routes>
+          <Route path="/chat" element={user ? <Chat /> : <Login />}></Route>
+          <Route path="/login" element={<Login />}></Route>
+          <Route path="/register" element={<Register />}></Route>
+        </Routes>
+      </ChatContextProvider>
     </>
   );
 }

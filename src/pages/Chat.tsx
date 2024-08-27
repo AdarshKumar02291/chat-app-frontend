@@ -1,8 +1,8 @@
 import { useContext } from "react";
 import { AuthContext } from "../context/Authcontext";
+import { ChatContext } from "../context/Chatcontext";
 
 function Chat() {
-
   const authContext = useContext(AuthContext);
 
   // Handle case where context is undefined
@@ -10,16 +10,28 @@ function Chat() {
     return <div>Error: AuthContext is not available.</div>;
   }
 
-  const {user} = authContext
+  const { user } = authContext;
+
+  const chatContext = useContext(ChatContext);
+
+  // Handle case where ChatContext is undefined
+  if (!chatContext) {
+    return <div>Error: ChatContext is not available.</div>;
+  }
+
+  const { userChats, isUserChatsLoading, userChatsError } = chatContext;
+  
+  console.log(userChats)
+
   return (
     <>
       <div className="flex items-center justify-center">
-        <div className="w-screen max-w-[1440px]  h-screen grid grid-cols-12">
+        <div className="w-screen max-w-[1440px] h-screen grid grid-cols-12">
           <div className="col-span-4 flex flex-col gap-y-4 border-r">
             <div className="mt-4 w-full">
               <div className="w-10/12 h-[50px] border border-[1px] border-[#d2d2d2] rounded-lg bg-[#f6f6f6] flex items-center ">
                 <input
-                  type="text "
+                  type="text"
                   placeholder="Search"
                   className=" px-4 bg-inherit focus:outline-none focus:border-transparent"
                 />
@@ -52,7 +64,7 @@ function Chat() {
                     <div>
                       Parikh: third hello i wanted to know about the frontend
                       position that is open in your company i believe i have the
-                      relevant skil{" "}
+                      relevant skill{" "}
                     </div>
                   </div>
                 </div>
