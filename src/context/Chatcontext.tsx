@@ -39,12 +39,12 @@ export const ChatContextProvider: FC<ChatContextProviderProps> = ({
 
     
     const getUserChats = async () => {
-      if (user?.user.id) {
+      if (user?.id) {
         
         setIsUserChatsLoading(true);
         setUserChatsError(false);
         const response = await getRequest(
-          `${BASE_URL}/v1/chat/all_chat/${user.user.id}`
+          `${BASE_URL}/v1/chat/all_chat/${user.id}`
         );
         console.log(response);
         setIsUserChatsLoading(false);

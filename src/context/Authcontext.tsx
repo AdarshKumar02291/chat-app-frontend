@@ -112,7 +112,7 @@ export const AuthContextProvider: FC<AuthContextProviderProps> = ({
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser); // Set user if parsing is successful
+        setUser(parsedUser.user); // Set user if parsing is successful
       } catch (error) {
         console.error("Error parsing user from localStorage", error);
       }

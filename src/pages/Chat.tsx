@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { AuthContext } from "../context/Authcontext";
 import { ChatContext } from "../context/Chatcontext";
+import UserChat from "../components/UserChat";
 
 function Chat() {
   const authContext = useContext(AuthContext);
@@ -20,8 +21,6 @@ function Chat() {
   }
 
   const { userChats, isUserChatsLoading, userChatsError } = chatContext;
-  
-  console.log(userChats)
 
   return (
     <>
@@ -52,7 +51,7 @@ function Chat() {
               </div>
             </div>
             <div className="">
-              <div className="flex items-center gap-x-3 p-2 bg-[#f6f6f6] h-[90px] px-2 py-2 ">
+              {/* <div className="flex items-center gap-x-3 p-2 bg-[#f6f6f6] h-[90px] px-2 py-2 ">
                 <div className="bg-red-500 h-[40px] w-[70px] rounded-full"></div>
                 <div>
                   <div className="flex items-center gap-x-2 text-[12px]">
@@ -68,7 +67,19 @@ function Chat() {
                     </div>
                   </div>
                 </div>
-              </div>
+                
+              </div> */}
+              <div>
+                  {isUserChatsLoading ? (
+                    <>
+                      <div>Loading chats ....</div>
+                    </>
+                  ) : (
+                    <div>{userChats?.map((item:any,index:any)=>{
+                      return <UserChat chat={item} user ={user}></UserChat>
+                    })}</div>
+                  )}
+                </div>
             </div>
           </div>
           <div className="col-span-8 ">
