@@ -1,8 +1,9 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { AuthContext } from "../context/Authcontext";
 import { ChatContext } from "../context/Chatcontext";
 import UserChat from "../components/UserChat";
 import { useFetchRecipient } from "../hooks/useFetchRecipient";
+import { formatDate } from "../utils/services";
 
 function Chat() {
   const authContext = useContext(AuthContext);
@@ -28,10 +29,15 @@ function Chat() {
     updateCurrentChat,
     messages,
     currentChat,
+    sendTextMessage,
   } = chatContext;
 
   //@ts-ignore
   const { recipientUser } = useFetchRecipient(currentChat, user);
+
+  const [textMessage, setTextMessage] = useState("");
+
+  console.log(textMessage);
 
   return (
     <>
@@ -99,7 +105,7 @@ function Chat() {
               </div>
             </div>
           </div>
-          <div className="col-span-8 ">
+          <div className="col-span-8 flex flex-col h-[700px]">
             <div className="w-full bg-[#f6f6f6] h-[80px] flex gap-x-4 px-4 py-2 items-center">
               <div className="bg-red-500 h-[50px] w-[50px] rounded-full"></div>
               <div>
@@ -108,7 +114,51 @@ function Chat() {
               </div>
             </div>
 
-            <div>{messages !== null && <div>{messages.text}</div>}</div>
+            <div className="flex-grow overflow-y-auto p-2">
+              {messages !== null && (
+                <div className="w-full flex flex-col gap-y-4">
+                  {messages.map((item: any, index: any) => (
+                    <div
+                      key={index}
+                      className={`${
+                        parseInt(item.senderId) === user?.id
+                          ? "bg-blue-500"
+                          : "bg-green-500 self-end"
+                      } w-fit rounded-md px-4 py-2`}
+                    >
+                      {item.text}
+                      <div className="text-[10px]">{formatDate(item.time)}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="h-fit flex-shrink-0">
+              <input
+                type="text"
+                placeholder="Type a message"
+                className="w-full border-t border-gray-300 p-2"
+                value={textMessage}
+                onChange={(e) => {
+                  const { value } = e.target;
+                  setTextMessage(value);
+                }}
+              />
+              <button
+                className="bg-slate-600 px-2 py-1 rounded-md mt-2 text-white"
+                onClick={() =>
+                  sendTextMessage(
+                    textMessage,
+                    user?.id.toString(), //@ts-ignore
+                    currentChat?.id,
+                    setTextMessage
+                  )
+                }
+              >
+                Send
+              </button>
+            </div>
           </div>
         </div>
       </div>

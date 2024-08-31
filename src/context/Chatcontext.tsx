@@ -6,24 +6,48 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
-import { BASE_URL, getRequest } from "../utils/services";
+import { BASE_URL, getRequest, postRequest } from "../utils/services";
 
 // Define types for the context value
-interface ChatContextType {
-  userChats: any;
-  isUserChatsLoading: boolean;
-  userChatsError: boolean | any;
-  updateCurrentChat: (chat: any) => void;
-  messages : any,
-  isMessagesLoading:any
-  messagesError:any
-  currentChat:any
+interface Chat {
+  id: string;
+  members: Array<string>; // Example type, replace with your actual Chat properties
 }
 
-// Define props for the provider component
+interface Message {
+  id: string;
+  chatId: string;
+  senderId: string;
+  text: string;
+  time: string; // Adjust this to `Date` if your API returns a date object
+}
+
+interface User {
+  id: string;
+  firstName: string;
+  // Add other user properties here
+}
+
+interface ChatContextType {
+  userChats: Chat[] | null;
+  isUserChatsLoading: boolean;
+  userChatsError: boolean | string | null;
+  currentChat: Chat | null;
+  updateCurrentChat: (chat: Chat) => void;
+  messages: Message[] | null;
+  isMessagesLoading: boolean;
+  messagesError: boolean | string | null;
+  sendTextMessage: (
+    textMessage: string,
+    sender: string,
+    currentChatId: string,
+    setTextMessage: React.Dispatch<React.SetStateAction<string>>
+  ) => Promise<void>;
+}
+
 interface ChatContextProviderProps {
   children: ReactNode;
-  user: any; // Replace `any` with a specific type for `user` if you have one
+  user: User | null; // Adjusted to `User | null` to handle initial null state
 }
 
 // Create the context with a default value
@@ -35,23 +59,25 @@ export const ChatContextProvider: FC<ChatContextProviderProps> = ({
   children,
   user,
 }) => {
-  const [userChats, setUserChats] = useState<any>(null);
+  const [userChats, setUserChats] = useState<Chat[] | null>(null);
   const [isUserChatsLoading, setIsUserChatsLoading] = useState<boolean>(false);
-  const [userChatsError, setUserChatsError] = useState<boolean | any>(false);
+  const [userChatsError, setUserChatsError] = useState<boolean | string | null>(null);
 
-  const [currentChat, setCurrentChat] = useState<any>(null);
+  const [currentChat, setCurrentChat] = useState<Chat | null>(null);
 
-  const [messages, setMessages] = useState<any>(null);
+  const [messages, setMessages] = useState<Message[] | null>(null);
   const [isMessagesLoading, setIsMessagesLoading] = useState<boolean>(false);
-  const [messagesError, setMessagesError] = useState<boolean | any>(null);
+  const [messagesError, setMessagesError] = useState<boolean | string | null>(null);
 
-  console.log("messages",messages)
+  const [sendMessageError, setSendMessageError] = useState<string | null>(null);
+
+  const [newMessage, setNewMessage] = useState<Message | null>(null);
 
   useEffect(() => {
     const getUserChats = async () => {
       if (user?.id) {
         setIsUserChatsLoading(true);
-        setUserChatsError(false);
+        setUserChatsError(null);
         try {
           const response = await getRequest(
             `${BASE_URL}/v1/chat/all_chat/${user.id}`
@@ -60,56 +86,81 @@ export const ChatContextProvider: FC<ChatContextProviderProps> = ({
           if (response.error) {
             setUserChatsError(response.error);
           } else {
-            setUserChats(response);
+            setUserChats(response as Chat[]); // Cast the response to Chat[]
           }
         } catch (error) {
           setIsUserChatsLoading(false);
-          setUserChatsError(error);
+          setUserChatsError(String(error));
         }
       }
     };
     getUserChats();
   }, [user]);
 
-  const updateCurrentChat = useCallback((chat: any) => {
+  const updateCurrentChat = useCallback((chat: Chat) => {
     setCurrentChat(chat);
   }, []);
+
+  const sendTextMessage = useCallback(
+    async (
+      textMessage: string,
+      sender: string,
+      currentChatId: string,
+      setTextMessage: React.Dispatch<React.SetStateAction<string>>
+    ) => {
+      if (!textMessage) return console.log("enter message");
+
+      try {
+        const res = await postRequest(
+          `${BASE_URL}/v1/message/create`,
+          JSON.stringify({
+            chatId: currentChatId,
+            senderId: sender,
+            text: textMessage,
+          })
+        );
+
+        if (res.error) {
+          setSendMessageError(res.error);
+          return;
+        }
+        setNewMessage(res as Message);
+        setTextMessage("");
+        setMessages((prev) => prev ? [...prev, res as Message] : [res as Message]);
+      } catch (error) {
+        setSendMessageError(String(error));
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     const getMessages = async () => {
       if (!currentChat) return; // Exit early if currentChat is null
-  
+
       setIsMessagesLoading(true);
       setMessagesError(null);
-  
+
       try {
         const response = await getRequest(
           `${BASE_URL}/v1/message/get_message/${currentChat.id}`
         );
-  
-        console.log("Message API response:", response); // Log the response for debugging
-  
+
         setIsMessagesLoading(false);
-  
+
         if (response.error) {
           setMessagesError(response.error);
         } else {
-          setMessages(response); // Assuming response is an array or object containing messages
+          setMessages(response as Message[]); // Assuming response is an array of messages
         }
       } catch (error) {
         setIsMessagesLoading(false);
-        setMessagesError(error);
+        setMessagesError(String(error));
       }
     };
-  
+
     getMessages();
   }, [currentChat]);
-  
-  console.log("currentChat:", currentChat);
-  console.log("messages:", messages); // Add this log to track messages state changes
-  
-
-  console.log("currentChat:", currentChat);
 
   return (
     <ChatContext.Provider
@@ -121,7 +172,8 @@ export const ChatContextProvider: FC<ChatContextProviderProps> = ({
         updateCurrentChat,
         messages,
         isMessagesLoading,
-        messagesError
+        messagesError,
+        sendTextMessage,
       }}
     >
       {children}

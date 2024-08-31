@@ -10,6 +10,7 @@ import { BASE_URL, postRequest } from "../utils/services";
 
 interface User {
   name: string;
+  id:any
 }
 
 interface Register {
