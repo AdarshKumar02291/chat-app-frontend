@@ -2,6 +2,7 @@ import { useContext } from "react";
 import { AuthContext } from "../context/Authcontext";
 import { ChatContext } from "../context/Chatcontext";
 import UserChat from "../components/UserChat";
+import { useFetchRecipient } from "../hooks/useFetchRecipient";
 
 function Chat() {
   const authContext = useContext(AuthContext);
@@ -20,7 +21,17 @@ function Chat() {
     return <div>Error: ChatContext is not available.</div>;
   }
 
-  const { userChats, isUserChatsLoading, userChatsError } = chatContext;
+  const {
+    userChats,
+    isUserChatsLoading,
+    userChatsError,
+    updateCurrentChat,
+    messages,
+    currentChat,
+  } = chatContext;
+
+  //@ts-ignore
+  const { recipientUser } = useFetchRecipient(currentChat, user);
 
   return (
     <>
@@ -70,26 +81,34 @@ function Chat() {
                 
               </div> */}
               <div>
-                  {isUserChatsLoading ? (
-                    <>
-                      <div>Loading chats ....</div>
-                    </>
-                  ) : (
-                    <div>{userChats?.map((item:any,index:any)=>{
-                      return <UserChat chat={item} user ={user}></UserChat>
-                    })}</div>
-                  )}
-                </div>
+                {isUserChatsLoading ? (
+                  <>
+                    <div>Loading chats ....</div>
+                  </>
+                ) : (
+                  <div>
+                    {userChats?.map((item: any, index: any) => {
+                      return (
+                        <div onClick={() => updateCurrentChat(item)}>
+                          <UserChat chat={item} user={user}></UserChat>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div className="col-span-8 ">
             <div className="w-full bg-[#f6f6f6] h-[80px] flex gap-x-4 px-4 py-2 items-center">
               <div className="bg-red-500 h-[50px] w-[50px] rounded-full"></div>
               <div>
-                <div>Parikh</div>
+                <div>{recipientUser?.firstName}</div>
                 <div className="text-[12px]">Typing...</div>
               </div>
             </div>
+
+            <div>{messages !== null && <div>{messages.text}</div>}</div>
           </div>
         </div>
       </div>

@@ -2,11 +2,11 @@ import { useFetchRecipient } from "../hooks/useFetchRecipient";
 
 function UserChat({ chat, user }: any) {
   const { recipientUser } = useFetchRecipient(chat, user);
-  console.log(recipientUser);
+  
 
   return (
     <>
-      <div className="flex items-center gap-x-3 p-2 bg-[#f6f6f6] h-[90px] px-2 py-2 ">
+      <div className="flex items-center gap-x-3 p-2 bg-[#f6f6f6] h-[90px] px-2 py-2 border-b">
         <div className="bg-red-500 h-[40px] w-[40px] rounded-full"></div>
         <div className="max-w-[400px]">
           <div className="flex items-center gap-x-2 text-[12px]">
