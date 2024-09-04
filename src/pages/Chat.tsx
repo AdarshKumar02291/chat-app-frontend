@@ -37,7 +37,7 @@ function Chat() {
 
   const [textMessage, setTextMessage] = useState("");
 
-  console.log(textMessage);
+  
 
   return (
     <>

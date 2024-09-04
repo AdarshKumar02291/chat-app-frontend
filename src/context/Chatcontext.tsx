@@ -7,6 +7,7 @@ import React, {
   useEffect,
 } from "react";
 import { BASE_URL, getRequest, postRequest } from "../utils/services";
+import { io } from "socket.io-client";
 
 // Define types for the context value
 interface Chat {
@@ -24,7 +25,7 @@ interface Message {
 
 interface User {
   id: string;
-  firstName: string;
+
   // Add other user properties here
 }
 
@@ -61,17 +62,47 @@ export const ChatContextProvider: FC<ChatContextProviderProps> = ({
 }) => {
   const [userChats, setUserChats] = useState<Chat[] | null>(null);
   const [isUserChatsLoading, setIsUserChatsLoading] = useState<boolean>(false);
-  const [userChatsError, setUserChatsError] = useState<boolean | string | null>(null);
+  const [userChatsError, setUserChatsError] = useState<boolean | string | null>(
+    null
+  );
 
   const [currentChat, setCurrentChat] = useState<Chat | null>(null);
 
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [isMessagesLoading, setIsMessagesLoading] = useState<boolean>(false);
-  const [messagesError, setMessagesError] = useState<boolean | string | null>(null);
+  const [messagesError, setMessagesError] = useState<boolean | string | null>(
+    null
+  );
 
   const [sendMessageError, setSendMessageError] = useState<string | null>(null);
 
   const [newMessage, setNewMessage] = useState<Message | null>(null);
+  const [socket, setSocket] = useState<any>(null);
+
+
+  const socketfunction = async () => {
+    const newSocket = await io("http://localhost:8000/");
+    setSocket(newSocket);
+    // Emit the event as soon as the socket connects
+    newSocket.on("connect", () => {
+      newSocket.emit("addNewUser", user?.id);
+      console.log("User connected with socket ID:", newSocket.id);
+      return () => {
+        newSocket.disconnect();
+      };
+    });
+  };
+
+  useEffect(() => {
+    socketfunction();
+  },[user]);
+
+  
+
+  useEffect(() => {
+    if (socket === null) return;
+    socket.emit("addNewUser", user?.id);
+  }, [socket]);-
 
   useEffect(() => {
     const getUserChats = async () => {
@@ -126,7 +157,9 @@ export const ChatContextProvider: FC<ChatContextProviderProps> = ({
         }
         setNewMessage(res as Message);
         setTextMessage("");
-        setMessages((prev) => prev ? [...prev, res as Message] : [res as Message]);
+        setMessages((prev) =>
+          prev ? [...prev, res as Message] : [res as Message]
+        );
       } catch (error) {
         setSendMessageError(String(error));
       }

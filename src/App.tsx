@@ -13,8 +13,10 @@ function App() {
     // If AuthContext is undefined, return null or a fallback UI
     return <Login />;
   }
-
+ 
   const { user } = authContext;
+  
+
   return (
     <>
       <ChatContextProvider user={user}>
