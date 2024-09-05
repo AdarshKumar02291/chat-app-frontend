@@ -66,6 +66,8 @@ export const ChatContextProvider: FC<ChatContextProviderProps> = ({
     null
   );
 
+  
+
   const [currentChat, setCurrentChat] = useState<Chat | null>(null);
 
   const [messages, setMessages] = useState<Message[] | null>(null);
@@ -78,7 +80,6 @@ export const ChatContextProvider: FC<ChatContextProviderProps> = ({
 
   const [newMessage, setNewMessage] = useState<Message | null>(null);
   const [socket, setSocket] = useState<any>(null);
-
 
   const socketfunction = async () => {
     const newSocket = await io("http://localhost:8000/");
@@ -95,16 +96,13 @@ export const ChatContextProvider: FC<ChatContextProviderProps> = ({
 
   useEffect(() => {
     socketfunction();
-  },[user]);
-
-  
+  }, [user]);
 
   useEffect(() => {
     if (socket === null) return;
     socket.emit("addNewUser", user?.id);
-  }, [socket]);-
-
-  useEffect(() => {
+  }, [socket]);
+  -useEffect(() => {
     const getUserChats = async () => {
       if (user?.id) {
         setIsUserChatsLoading(true);

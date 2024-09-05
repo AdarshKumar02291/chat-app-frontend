@@ -1,13 +1,6 @@
-import {
-  createContext,
-  useState,
-  ReactNode,
-  FC,
-  useCallback,
-  useEffect,
-} from "react";
+import {createContext,useState, ReactNode,  FC, useCallback,useEffect,} from "react";
 import { BASE_URL, postRequest } from "../utils/services";
-
+import { useNavigate } from "react-router";
 interface User {
   name: string;
   id:any
@@ -51,6 +44,7 @@ interface AuthContextProviderProps {
 export const AuthContextProvider: FC<AuthContextProviderProps> = ({
   children,
 }) => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null); // Initialize as null
   const [registerError, setRegisterError] = useState<null | any>(null);
   const [isRegisterLoading, setIsRegisterLoading] = useState<boolean>(false);
@@ -93,7 +87,6 @@ export const AuthContextProvider: FC<AuthContextProviderProps> = ({
   }, [register]);
 
   const loginUser = useCallback(async () => {
-   
     setIsLoginLoading(true);
     setLoginError(null);
     const res = await postRequest(
@@ -106,7 +99,10 @@ export const AuthContextProvider: FC<AuthContextProviderProps> = ({
     }
     await localStorage.setItem("User", JSON.stringify(res));
     setUser(res);
-  }, [loginInfo]);
+
+    // Redirect to chat page after successful login
+    navigate("/chat");
+  }, [loginInfo, navigate]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("User");

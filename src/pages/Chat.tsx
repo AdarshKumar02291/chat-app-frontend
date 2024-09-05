@@ -36,7 +36,10 @@ function Chat() {
   const { recipientUser } = useFetchRecipient(currentChat, user);
 
   const [textMessage, setTextMessage] = useState("");
-
+  console.log(user)
+  
+  console.log(chatContext)
+  
   
 
   return (
