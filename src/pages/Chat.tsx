@@ -36,11 +36,7 @@ function Chat() {
   const { recipientUser } = useFetchRecipient(currentChat, user);
 
   const [textMessage, setTextMessage] = useState("");
-  console.log(user)
-  
-  console.log(chatContext)
-  
-  
+  console.log(chatContext);
 
   return (
     <>
@@ -98,7 +94,10 @@ function Chat() {
                   <div>
                     {userChats?.map((item: any, index: any) => {
                       return (
-                        <div onClick={() => updateCurrentChat(item)}>
+                        <div
+                          onClick={() => updateCurrentChat(item)}
+                          key={index}
+                        >
                           <UserChat chat={item} user={user}></UserChat>
                         </div>
                       );
@@ -124,7 +123,7 @@ function Chat() {
                     <div
                       key={index}
                       className={`${
-                        parseInt(item.senderId) === user?.id
+                        (item.senderId) === user?.id
                           ? "bg-blue-500"
                           : "bg-green-500 self-end"
                       } w-fit rounded-md px-4 py-2`}
@@ -153,7 +152,8 @@ function Chat() {
                 onClick={() =>
                   sendTextMessage(
                     textMessage,
-                    user?.id.toString(), //@ts-ignore
+                    //@ts-ignore
+                    user?.id, //@ts-ignore
                     currentChat?.id,
                     setTextMessage
                   )

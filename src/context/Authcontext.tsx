@@ -1,41 +1,48 @@
-import {createContext,useState, ReactNode,  FC, useCallback,useEffect,} from "react";
+import {
+  createContext,
+  useState,
+  ReactNode,
+  FC,
+  useCallback,
+  useEffect,
+} from "react";
 import { BASE_URL, postRequest } from "../utils/services";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
+
 interface User {
-  name: string;
-  id:any
+  id: string;
+  firstName?: string;
+  email: string;
 }
 
 interface Register {
   firstName: string;
   email: string;
-  lastName :string;
-  password:string;
+  lastName: string;
+  password: string;
 }
 
 interface Login {
   email: string;
-    password:string;
+  password: string;
 }
 
 interface AuthContextType {
-  user: User | null; // Allow user to be null initially
+  user: User | null;
   register: Register;
   loginInfo: Login;
   updateRegisterInfo: (info: Register) => void;
-  registerUser: () => void;
-  registerError: null | any;
-  isRegisterLoading: boolean; // Changed from `any` to `boolean`
-  loginError: null | any;
+  registerUser: () => Promise<void>;
+  registerError: string | null;
+  isRegisterLoading: boolean;
+  loginError: string | null;
   updateLoginInfo: (info: Login) => void;
-  isLoginLoading: boolean; // Changed from `any` to `boolean`
-  loginUser: () => void; // Added loginUser type
-  logoutUser: () => void; // Added logoutUser type
+  isLoginLoading: boolean;
+  loginUser: () => Promise<void>;
+  logoutUser: () => void;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(
-  undefined
-);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthContextProviderProps {
   children: ReactNode;
@@ -45,23 +52,37 @@ export const AuthContextProvider: FC<AuthContextProviderProps> = ({
   children,
 }) => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null); // Initialize as null
-  const [registerError, setRegisterError] = useState<null | any>(null);
-  const [isRegisterLoading, setIsRegisterLoading] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [registerError, setRegisterError] = useState<string | null>(null);
+  const [isRegisterLoading, setIsRegisterLoading] = useState(false);
   const [register, setRegisterInfo] = useState<Register>({
     firstName: "",
     email: "",
-    lastName:"",
-    password : "",
+    lastName: "",
+    password: "",
   });
 
   const [loginInfo, setLoginInfo] = useState<Login>({
     email: "",
-    password:"",
+    password: "",
   });
 
-  const [loginError, setLoginError] = useState<null | any>(null);
-  const [isLoginLoading, setIsLoginLoading] = useState<boolean>(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("User");
+    if (storedUser) {
+      try {
+        const parsedData = JSON.parse(storedUser);
+        const userData = parsedData.user || parsedData;
+        setUser(userData);
+      } catch (error) {
+        console.error("Error parsing user from localStorage:", error);
+        localStorage.removeItem("User");
+      }
+    }
+  }, []);
 
   const updateRegisterInfo = useCallback((info: Register) => {
     setRegisterInfo(info);
@@ -74,52 +95,60 @@ export const AuthContextProvider: FC<AuthContextProviderProps> = ({
   const registerUser = useCallback(async () => {
     setIsRegisterLoading(true);
     setRegisterError(null);
-    const res = await postRequest(
-      `${BASE_URL}/v1/user/signup`,
-      JSON.stringify(register)
-    );
-    setIsRegisterLoading(false);
-    if (res.error) {
-      return setRegisterError(res);
+    
+    try {
+      const response = await postRequest(
+        `${BASE_URL}/v1/user/signup`,
+        JSON.stringify(register)
+      );
+
+      if (response.error) {
+        setRegisterError(response.error);
+        return;
+      }
+
+      const userData = response.user || response;
+      localStorage.setItem("User", JSON.stringify({ user: userData }));
+      setUser(userData);
+      navigate("/chat");
+    } catch (error) {
+      setRegisterError(String(error));
+    } finally {
+      setIsRegisterLoading(false);
     }
-    localStorage.setItem("User", JSON.stringify(res));
-    setUser(res);
-  }, [register]);
+  }, [register, navigate]);
 
   const loginUser = useCallback(async () => {
     setIsLoginLoading(true);
     setLoginError(null);
-    const res = await postRequest(
-      `${BASE_URL}/v1/user/login`,
-      JSON.stringify(loginInfo)
-    );
-    setIsLoginLoading(false);
-    if (res.error) {
-      return setLoginError(res);
-    }
-    await localStorage.setItem("User", JSON.stringify(res));
-    setUser(res);
+    
+    try {
+      const response = await postRequest(
+        `${BASE_URL}/v1/user/login`,
+        JSON.stringify(loginInfo)
+      );
 
-    // Redirect to chat page after successful login
-    navigate("/chat");
-  }, [loginInfo, navigate]);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("User");
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser)
-        setUser(parsedUser.user); // Set user if parsing is successful
-      } catch (error) {
-        console.error("Error parsing user from localStorage", error);
+      if (response.error) {
+        setLoginError(response.error);
+        return;
       }
+
+      const userData = response.user || response;
+      localStorage.setItem("User", JSON.stringify({ user: userData }));
+      setUser(userData);
+      navigate("/chat");
+    } catch (error) {
+      setLoginError(String(error));
+    } finally {
+      setIsLoginLoading(false);
     }
-  }, []);
+  }, [loginInfo, navigate]);
 
   const logoutUser = useCallback(() => {
     localStorage.removeItem("User");
     setUser(null);
-  }, []);
+    navigate("/login");
+  }, [navigate]);
 
   return (
     <AuthContext.Provider

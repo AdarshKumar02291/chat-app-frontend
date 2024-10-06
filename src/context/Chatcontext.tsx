@@ -1,18 +1,19 @@
-import React, {
+import {
   createContext,
   useState,
   ReactNode,
   FC,
   useCallback,
   useEffect,
+  useContext,
 } from "react";
 import { BASE_URL, getRequest, postRequest } from "../utils/services";
-import { io } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
+import { AuthContext } from "./Authcontext";
 
-// Define types for the context value
 interface Chat {
   id: string;
-  members: Array<string>; // Example type, replace with your actual Chat properties
+  members: string[];
 }
 
 interface Message {
@@ -20,24 +21,18 @@ interface Message {
   chatId: string;
   senderId: string;
   text: string;
-  time: string; // Adjust this to `Date` if your API returns a date object
-}
-
-interface User {
-  id: string;
-
-  // Add other user properties here
+  time: string;
 }
 
 interface ChatContextType {
   userChats: Chat[] | null;
   isUserChatsLoading: boolean;
-  userChatsError: boolean | string | null;
+  userChatsError: string | null;
   currentChat: Chat | null;
   updateCurrentChat: (chat: Chat) => void;
   messages: Message[] | null;
   isMessagesLoading: boolean;
-  messagesError: boolean | string | null;
+  messagesError: string | null;
   sendTextMessage: (
     textMessage: string,
     sender: string,
@@ -46,85 +41,102 @@ interface ChatContextType {
   ) => Promise<void>;
 }
 
-interface ChatContextProviderProps {
-  children: ReactNode;
-  user: User | null; // Adjusted to `User | null` to handle initial null state
-}
-
-// Create the context with a default value
 export const ChatContext = createContext<ChatContextType | undefined>(
   undefined
 );
 
+interface ChatContextProviderProps {
+  children: ReactNode;
+}
+
 export const ChatContextProvider: FC<ChatContextProviderProps> = ({
   children,
-  user,
 }) => {
+  const authContext = useContext(AuthContext);
+  if (!authContext) {
+    throw new Error("ChatContext must be used within AuthContextProvider");
+  }
+  const { user } = authContext;
+
   const [userChats, setUserChats] = useState<Chat[] | null>(null);
-  const [isUserChatsLoading, setIsUserChatsLoading] = useState<boolean>(false);
-  const [userChatsError, setUserChatsError] = useState<boolean | string | null>(
-    null
-  );
-
-  
-
+  const [isUserChatsLoading, setIsUserChatsLoading] = useState(false);
+  const [userChatsError, setUserChatsError] = useState<string | null>(null);
   const [currentChat, setCurrentChat] = useState<Chat | null>(null);
-
   const [messages, setMessages] = useState<Message[] | null>(null);
-  const [isMessagesLoading, setIsMessagesLoading] = useState<boolean>(false);
-  const [messagesError, setMessagesError] = useState<boolean | string | null>(
-    null
-  );
-
-  const [sendMessageError, setSendMessageError] = useState<string | null>(null);
-
+  const [isMessagesLoading, setIsMessagesLoading] = useState(false);
+  const [messagesError, setMessagesError] = useState<string | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [newMessage, setNewMessage] = useState<Message | null>(null);
-  const [socket, setSocket] = useState<any>(null);
 
-  const socketfunction = async () => {
-    const newSocket = await io("http://localhost:8000/");
+  // Initialize socket connection
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const newSocket = io("http://localhost:8000");
     setSocket(newSocket);
-    // Emit the event as soon as the socket connects
-    newSocket.on("connect", () => {
-      newSocket.emit("addNewUser", user?.id);
-      console.log("User connected with socket ID:", newSocket.id);
-      return () => {
-        newSocket.disconnect();
-      };
-    });
-  };
 
-  useEffect(() => {
-    socketfunction();
-  }, [user]);
+    newSocket.emit("addNewUser", user.id);
 
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [user?.id]);
+
+  // Fetch user chats
   useEffect(() => {
-    if (socket === null) return;
-    socket.emit("addNewUser", user?.id);
-  }, [socket]);
-  -useEffect(() => {
     const getUserChats = async () => {
-      if (user?.id) {
-        setIsUserChatsLoading(true);
-        setUserChatsError(null);
-        try {
-          const response = await getRequest(
-            `${BASE_URL}/v1/chat/all_chat/${user.id}`
-          );
-          setIsUserChatsLoading(false);
-          if (response.error) {
-            setUserChatsError(response.error);
-          } else {
-            setUserChats(response as Chat[]); // Cast the response to Chat[]
-          }
-        } catch (error) {
-          setIsUserChatsLoading(false);
-          setUserChatsError(String(error));
+      if (!user?.id) return;
+
+      setIsUserChatsLoading(true);
+      setUserChatsError(null);
+
+      try {
+        const response = await getRequest(
+          `${BASE_URL}/v1/chat/all_chat/${user.id}`
+        );
+
+        if (response.error) {
+          setUserChatsError(response.error);
+        } else {
+          setUserChats(response);
         }
+      } catch (error) {
+        setUserChatsError(String(error));
+      } finally {
+        setIsUserChatsLoading(false);
       }
     };
+
     getUserChats();
-  }, [user]);
+  }, [user?.id]);
+
+  // Fetch messages when current chat changes
+  useEffect(() => {
+    const getMessages = async () => {
+      if (!currentChat?.id) return;
+
+      setIsMessagesLoading(true);
+      setMessagesError(null);
+
+      try {
+        const response = await getRequest(
+          `${BASE_URL}/v1/message/get_message/${currentChat.id}`
+        );
+
+        if (response.error) {
+          setMessagesError(response.error);
+        } else {
+          setMessages(response);
+        }
+      } catch (error) {
+        setMessagesError(String(error));
+      } finally {
+        setIsMessagesLoading(false);
+      }
+    };
+
+    getMessages();
+  }, [currentChat?.id]);
 
   const updateCurrentChat = useCallback((chat: Chat) => {
     setCurrentChat(chat);
@@ -137,61 +149,40 @@ export const ChatContextProvider: FC<ChatContextProviderProps> = ({
       currentChatId: string,
       setTextMessage: React.Dispatch<React.SetStateAction<string>>
     ) => {
-      if (!textMessage) return console.log("enter message");
+      if (!textMessage.trim()) {
+        console.log("Message cannot be empty");
+        return;
+      }
 
       try {
-        const res = await postRequest(
+        const response = await postRequest(
           `${BASE_URL}/v1/message/create`,
           JSON.stringify({
             chatId: currentChatId,
-            senderId: sender,
-            text: textMessage,
+            senderId: sender.toString(),
+            text: textMessage.trim(),
           })
         );
 
-        if (res.error) {
-          setSendMessageError(res.error);
+        if (response.error) {
+          console.error("Error sending message:", response.error);
           return;
         }
-        setNewMessage(res as Message);
+
+        setNewMessage(response);
+        setMessages((prev) => (prev ? [...prev, response] : [response]));
         setTextMessage("");
-        setMessages((prev) =>
-          prev ? [...prev, res as Message] : [res as Message]
-        );
-      } catch (error) {
-        setSendMessageError(String(error));
-      }
-    },
-    []
-  );
 
-  useEffect(() => {
-    const getMessages = async () => {
-      if (!currentChat) return; // Exit early if currentChat is null
-
-      setIsMessagesLoading(true);
-      setMessagesError(null);
-
-      try {
-        const response = await getRequest(
-          `${BASE_URL}/v1/message/get_message/${currentChat.id}`
-        );
-
-        setIsMessagesLoading(false);
-
-        if (response.error) {
-          setMessagesError(response.error);
-        } else {
-          setMessages(response as Message[]); // Assuming response is an array of messages
+        // Emit socket event for real-time updates
+        if (socket) {
+          socket.emit("sendMessage", response);
         }
       } catch (error) {
-        setIsMessagesLoading(false);
-        setMessagesError(String(error));
+        console.error("Error sending message:", error);
       }
-    };
-
-    getMessages();
-  }, [currentChat]);
+    },
+    [socket]
+  );
 
   return (
     <ChatContext.Provider
