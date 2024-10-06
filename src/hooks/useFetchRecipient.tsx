@@ -13,6 +13,7 @@ interface Chat {
 
 interface RecipientUser {
   firstName: string;
+  id:any;
   // Add other relevant fields if necessary
 }
 

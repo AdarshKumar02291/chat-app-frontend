@@ -30,13 +30,16 @@ function Chat() {
     messages,
     currentChat,
     sendTextMessage,
+    onlineUsers,
   } = chatContext;
 
   //@ts-ignore
   const { recipientUser } = useFetchRecipient(currentChat, user);
 
+  const isUserOnline = onlineUsers?.some(
+    (user: any) => user?.userId === recipientUser?.id
+  );
   const [textMessage, setTextMessage] = useState("");
-  console.log(chatContext);
 
   return (
     <>
@@ -112,7 +115,13 @@ function Chat() {
               <div className="bg-red-500 h-[50px] w-[50px] rounded-full"></div>
               <div>
                 <div>{recipientUser?.firstName}</div>
-                <div className="text-[12px]">Typing...</div>
+                <div className="text-[12px]">
+                  {onlineUsers.find(
+                    (user: any) => user.userId === recipientUser?.id
+                  )
+                    ? "Online"
+                    : ""}
+                </div>
               </div>
             </div>
 
@@ -123,7 +132,7 @@ function Chat() {
                     <div
                       key={index}
                       className={`${
-                        (item.senderId) === user?.id
+                        item.senderId === user?.id.toString()
                           ? "bg-blue-500"
                           : "bg-green-500 self-end"
                       } w-fit rounded-md px-4 py-2`}
