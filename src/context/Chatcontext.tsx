@@ -97,7 +97,7 @@ export const ChatContextProvider: FC<ChatContextProviderProps> = ({
     const recipientId = currentChat?.members?.find(
       (id) => id !== user?.id.toString()
     );
-    socket.emit("sendMessage", { ...newMessage, recipientId,onlineUsers });
+    socket.emit("sendMessage", { ...newMessage, recipientId });
   }, [newMessage]);
 
   useEffect(() => {
