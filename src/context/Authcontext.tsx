@@ -130,6 +130,7 @@ export const AuthContextProvider: FC<AuthContextProviderProps> = ({
 
       if (response.error) {
         setLoginError(response.error);
+        
         return;
       }
 

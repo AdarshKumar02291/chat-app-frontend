@@ -1,11 +1,12 @@
 import { Routes, Route } from "react-router-dom";
 import Chat from "./pages/Chat";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
 import { useContext } from "react";
 import { AuthContext } from "./context/Authcontext";
 import { Navigate } from "react-router-dom";
 import { ChatContextProvider } from "./context/Chatcontext";
+import Test from "./pages/Test";
+import { TestContextProvider } from "./context/Testcontext";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -33,7 +34,17 @@ function App() {
     <>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        
+
+        <Route
+          path="/test"
+          element={
+            <TestContextProvider>
+              <Test />
+            </TestContextProvider>
+          }
+        />
+
         <Route
           path="/chat"
           element={
